@@ -97,8 +97,11 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     public func updateSelectedServiceID(_ serviceID: String?) {
+        let previousServiceID = settings.selectedServiceID
         settings.selectedServiceID = serviceID
-        persistSettings()
+        if previousServiceID != serviceID {
+            persistSettings()
+        }
         refreshNow()
     }
 
@@ -193,7 +196,12 @@ public final class VPNMonitoringStore: ObservableObject {
             resolvedService = services.first
         }
 
-        settings.selectedServiceID = resolvedService?.id
-        persistSettings()
+        let previousServiceID = settings.selectedServiceID
+        let resolvedServiceID = resolvedService?.id
+        settings.selectedServiceID = resolvedServiceID
+
+        if previousServiceID != resolvedServiceID {
+            persistSettings()
+        }
     }
 }
