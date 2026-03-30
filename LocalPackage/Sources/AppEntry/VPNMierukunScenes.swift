@@ -19,8 +19,7 @@ public struct VPNMierukunScenes: Scene {
 
         Settings {
             VPNSettingsContainer(store: store)
-                .frame(width: 420, height: 420)
-                .padding(20)
+                .frame(minWidth: 420, idealWidth: 420, maxWidth: 420, minHeight: 220)
         }
     }
 }

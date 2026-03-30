@@ -1,95 +1,117 @@
 import Foundation
+import SystemConfiguration
 import VPNMierukunSharedModels
 
 public protocol VPNStatusProviding: Sendable {
-    func listServices() async throws -> [String]
-    func status(for serviceName: String) async throws -> VPNStatusSnapshot
+    func listServices() async throws -> [VPNService]
+    func status(for service: VPNService) async throws -> VPNStatusSnapshot
 }
 
-public struct ScutilVPNStatusProvider: VPNStatusProviding {
+public struct SystemConfigurationVPNStatusProvider: VPNStatusProviding {
     public init() {}
 
-    public func listServices() async throws -> [String] {
-        let output = try await runScutil(arguments: ["--nc", "list"])
-        return parseServices(output)
-    }
-
-    public func status(for serviceName: String) async throws -> VPNStatusSnapshot {
-        let output = try await runScutil(arguments: ["--nc", "status", serviceName])
-        return parseStatus(output, serviceName: serviceName)
-    }
-
-    private func runScutil(arguments: [String]) async throws -> String {
+    public func listServices() async throws -> [VPNService] {
         try await Task.detached(priority: .utility) {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/sbin/scutil")
-            process.arguments = arguments
-
-            let outputPipe = Pipe()
-            let errorPipe = Pipe()
-            process.standardOutput = outputPipe
-            process.standardError = errorPipe
-
-            try process.run()
-            process.waitUntilExit()
-
-            let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let output = String(decoding: data, as: UTF8.self)
-            let error = String(decoding: errorData, as: UTF8.self)
-
-            guard process.terminationStatus == 0 else {
-                throw NSError(
-                    domain: "ScutilVPNStatusProvider",
-                    code: Int(process.terminationStatus),
-                    userInfo: [NSLocalizedDescriptionKey: error.isEmpty ? output : error]
-                )
+            guard let preferences = SCPreferencesCreate(nil, "VPNMierukun" as CFString, nil) else {
+                throw providerError("VPN 設定の読み込みに失敗しました")
             }
 
-            return output
+            let services = (SCNetworkServiceCopyAll(preferences) as? [SCNetworkService]) ?? []
+            return services
+                .compactMap(makeVPNService(from:))
+                .sorted {
+                    $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
+                }
         }.value
     }
 
-    private func parseServices(_ output: String) -> [String] {
-        output
-            .split(separator: "\n")
-            .compactMap { line in
-                guard let firstQuote = line.firstIndex(of: "\""),
-                      let lastQuote = line.lastIndex(of: "\""),
-                      firstQuote != lastQuote else {
-                    return nil
-                }
-                let start = line.index(after: firstQuote)
-                return String(line[start..<lastQuote])
+    public func status(for service: VPNService) async throws -> VPNStatusSnapshot {
+        try await Task.detached(priority: .utility) {
+            guard let connection = SCNetworkConnectionCreateWithServiceID(nil, service.id as CFString, nil, nil) else {
+                throw providerError("VPN 接続の作成に失敗しました")
             }
-            .sorted()
+
+            let status = SCNetworkConnectionGetStatus(connection)
+            return VPNStatusSnapshot(
+                state: mapDisplayState(from: status),
+                serviceName: service.displayName,
+                rawStatus: rawStatusText(for: status),
+                updatedAt: .now
+            )
+        }.value
     }
 
-    private func parseStatus(_ output: String, serviceName: String) -> VPNStatusSnapshot {
-        let rawStatus = output
-            .split(separator: "\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .first(where: { !$0.isEmpty }) ?? "Unknown"
-
-        let normalized = rawStatus.lowercased()
-        let state: VPNDisplayState
-        if normalized.contains("connected") {
-            state = .connected
-        } else if normalized.contains("disconnected") {
-            state = .disconnected
-        } else if normalized.contains("connecting")
-                    || normalized.contains("disconnecting")
-                    || normalized.contains("reasserting") {
-            state = .transitioning
-        } else {
-            state = .unknown
+    private func makeVPNService(from service: SCNetworkService) -> VPNService? {
+        guard isVPNService(service),
+              let serviceID = SCNetworkServiceGetServiceID(service) as String? else {
+            return nil
         }
 
-        return VPNStatusSnapshot(
-            state: state,
-            serviceName: serviceName,
-            rawStatus: rawStatus,
-            updatedAt: .now
+        let name = (SCNetworkServiceGetName(service) as String?)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return VPNService(
+            id: serviceID,
+            displayName: (name?.isEmpty == false ? name : nil) ?? serviceID
         )
     }
+
+    private func isVPNService(_ service: SCNetworkService) -> Bool {
+        guard let rootInterface = SCNetworkServiceGetInterface(service) else {
+            return false
+        }
+
+        var currentInterface: SCNetworkInterface? = rootInterface
+        while let interface = currentInterface {
+            if let interfaceType = SCNetworkInterfaceGetInterfaceType(interface) as String?,
+               vpnInterfaceTypes.contains(interfaceType) {
+                return true
+            }
+            currentInterface = SCNetworkInterfaceGetInterface(interface)
+        }
+
+        return false
+    }
+
+    private func mapDisplayState(from status: SCNetworkConnectionStatus) -> VPNDisplayState {
+        switch status {
+        case .connected:
+            .connected
+        case .disconnected:
+            .disconnected
+        case .connecting, .disconnecting:
+            .transitioning
+        default:
+            .unknown
+        }
+    }
+
+    private func rawStatusText(for status: SCNetworkConnectionStatus) -> String {
+        switch status {
+        case .connected:
+            "Connected"
+        case .disconnected:
+            "Disconnected"
+        case .connecting:
+            "Connecting"
+        case .disconnecting:
+            "Disconnecting"
+        default:
+            "Invalid"
+        }
+    }
+}
+
+private let vpnInterfaceTypes: Set<String> = [
+    kSCNetworkInterfaceTypeIPSec as String,
+    kSCNetworkInterfaceTypeL2TP as String,
+    kSCNetworkInterfaceTypePPP as String
+]
+
+private func providerError(_ message: String) -> NSError {
+    NSError(
+        domain: "SystemConfigurationVPNStatusProvider",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: message]
+    )
 }

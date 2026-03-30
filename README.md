@@ -1,25 +1,41 @@
 # VPN-Mierukun
 
-## 概要
-VPN の接続状況を macOS の画面周囲に表示するオーバーレイ色で可視化するアプリです。
-常時画面を監視しなくても、接続中・未接続・判定不能の状態をひと目で把握できることを目指します。
+[日本語](README.ja.md)
 
-## セットアップ
+## Overview
+
+VPN-Mierukun is a macOS app that visualizes VPN connection status with a screen-edge overlay.
+It is designed to make it easy to notice whether your VPN is connected, disconnected, or in an unknown state without constantly checking a menu or settings window.
+
+## Setup
+
 - `open VPN-Mierukun.xcodeproj`
-- 必要に応じて `xcodebuild -project VPN-Mierukun.xcodeproj -scheme VPN-Mierukun -destination 'platform=macOS' build`
+- If needed, run `xcodebuild -project VPN-Mierukun.xcodeproj -scheme VPN-Mierukun -destination 'platform=macOS' build`
 
-## 開発メモ
-- 想定プラットフォーム: macOS
-- 想定 UI: メニューバー常駐 + 画面端オーバーレイ
-- app target は薄く保ち、実装本体は `LocalPackage/Sources` に配置
-- ディレクトリ構成は `AppEntry / Features / Core / Shared` を基準にする
-- 詳細仕様は [docs/specification.md](docs/specification.md) を参照
+## Distribution
 
-## ドキュメント
+- The app is distributed as a ZIP asset on GitHub Releases and installed through a Homebrew tap cask.
+- Install example: `brew install --cask shsw228/tap/vpn-mierukun`
+- Remove quarantine after installation: `xattr -dr com.apple.quarantine /Applications/VPN-Mierukun.app`
+- You can generate release artifacts locally with `./scripts/homebrew/build-release-artifacts.sh <version> ./dist`
+- See [docs/homebrew-tap.md](docs/homebrew-tap.md) for details
+
+## Development Notes
+
+- Target platform: macOS
+- Intended UI: menu bar resident app + screen-edge overlay
+- Keep the app target thin and place most implementation under `LocalPackage/Sources`
+- The directory structure follows `AppEntry / Features / Core / Shared`
+- See [docs/specification.md](docs/specification.md) for detailed requirements
+
+## Documentation
+
 - [docs/specification.md](docs/specification.md)
 - [docs/design.md](docs/design.md)
+- [docs/homebrew-tap.md](docs/homebrew-tap.md)
 
-## Package 依存グラフ
+## Package Dependency Graph
+
 ```mermaid
 flowchart TB
   subgraph AppEntry["App Entry"]

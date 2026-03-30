@@ -8,10 +8,12 @@ public final class VPNMonitoringStore: ObservableObject {
     public static let shared = VPNMonitoringStore()
 
     @Published public private(set) var snapshot: VPNStatusSnapshot = .initial
-    @Published public private(set) var availableServices: [String] = []
+    @Published public private(set) var availableServices: [VPNService] = []
     @Published public private(set) var isMonitoring = false
     @Published public private(set) var settings: AppSettings
     @Published public private(set) var lastErrorMessage: String?
+    @Published public private(set) var isShowingSettingsPreview = false
+    @Published public private(set) var previewColorState: VPNDisplayState?
 
     private let provider: any VPNStatusProviding
     private let settingsPersistence: any AppSettingsPersisting
@@ -19,8 +21,8 @@ public final class VPNMonitoringStore: ObservableObject {
     private var monitorTask: Task<Void, Never>?
 
     init(
-        provider: any VPNStatusProviding = ScutilVPNStatusProvider(),
-        settingsPersistence: any AppSettingsPersisting = UserDefaultsAppSettingsPersistence()
+        provider: any VPNStatusProviding = SystemConfigurationVPNStatusProvider(),
+        settingsPersistence: any AppSettingsPersisting = XDGConfigAppSettingsPersistence()
     ) {
         self.provider = provider
         self.settingsPersistence = settingsPersistence
@@ -74,7 +76,7 @@ public final class VPNMonitoringStore: ObservableObject {
         isMonitoring = false
         snapshot = VPNStatusSnapshot(
             state: .unknown,
-            serviceName: settings.selectedServiceName,
+            serviceName: selectedServiceDisplayName,
             rawStatus: "監視停止中",
             updatedAt: .now
         )
@@ -92,9 +94,36 @@ public final class VPNMonitoringStore: ObservableObject {
         applyOverlay()
     }
 
-    public func updateSelectedService(_ serviceName: String?) {
-        settings.selectedServiceName = serviceName
-        persistSettings()
+    public func beginSettingsPreview() {
+        guard !isShowingSettingsPreview else {
+            return
+        }
+
+        isShowingSettingsPreview = true
+        applyOverlay()
+    }
+
+    public func endSettingsPreview() {
+        guard isShowingSettingsPreview else {
+            return
+        }
+
+        isShowingSettingsPreview = false
+        previewColorState = nil
+        overlayManager.hidePreview()
+        applyOverlay()
+    }
+
+    public var selectedServiceDisplayName: String? {
+        selectedService?.displayName
+    }
+
+    public func updateSelectedServiceID(_ serviceID: String?) {
+        let previousServiceID = settings.selectedServiceID
+        settings.selectedServiceID = serviceID
+        if previousServiceID != serviceID {
+            persistSettings()
+        }
         refreshNow()
     }
 
@@ -105,6 +134,10 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     public func updateOverlayThickness(_ thickness: Double) {
+        guard settings.overlayThickness != thickness else {
+            return
+        }
+
         settings.overlayThickness = thickness
         persistSettings()
         applyOverlay()
@@ -116,7 +149,60 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     public func updateColorHex(_ hex: String, for state: VPNDisplayState) {
-        settings.setColorHex(hex, for: state)
+        guard let normalizedHex = normalizedHexColor(from: hex),
+              settings.colorHex(for: state) != normalizedHex else {
+            return
+        }
+
+        settings.setColorHex(normalizedHex, for: state)
+        persistSettings()
+        applyOverlay()
+    }
+
+    public func updateColor(_ color: OverlayColorValue, for state: VPNDisplayState) {
+        guard settings.colorHex(for: state) != color.hex ||
+              settings.alpha(for: state) != color.alpha else {
+            return
+        }
+
+        settings.setColorHex(color.hex, for: state)
+        settings.setAlpha(color.alpha, for: state)
+        persistSettings()
+        applyOverlay()
+    }
+
+    public func updateAlpha(_ alpha: Double, for state: VPNDisplayState) {
+        guard let normalizedAlpha = normalizedAlpha(alpha),
+              settings.alpha(for: state) != normalizedAlpha else {
+            return
+        }
+
+        settings.setAlpha(normalizedAlpha, for: state)
+        persistSettings()
+        applyOverlay()
+    }
+
+    public func resetOverlayColorsToDefaults() {
+        let defaults = AppSettings()
+        guard settings.connectedColorHex != defaults.connectedColorHex ||
+              settings.connectedAlpha != defaults.connectedAlpha ||
+              settings.disconnectedColorHex != defaults.disconnectedColorHex ||
+              settings.disconnectedAlpha != defaults.disconnectedAlpha ||
+              settings.transitioningColorHex != defaults.transitioningColorHex ||
+              settings.transitioningAlpha != defaults.transitioningAlpha ||
+              settings.unknownColorHex != defaults.unknownColorHex ||
+              settings.unknownAlpha != defaults.unknownAlpha else {
+            return
+        }
+
+        settings.connectedColorHex = defaults.connectedColorHex
+        settings.connectedAlpha = defaults.connectedAlpha
+        settings.disconnectedColorHex = defaults.disconnectedColorHex
+        settings.disconnectedAlpha = defaults.disconnectedAlpha
+        settings.transitioningColorHex = defaults.transitioningColorHex
+        settings.transitioningAlpha = defaults.transitioningAlpha
+        settings.unknownColorHex = defaults.unknownColorHex
+        settings.unknownAlpha = defaults.unknownAlpha
         persistSettings()
         applyOverlay()
     }
@@ -125,19 +211,29 @@ public final class VPNMonitoringStore: ObservableObject {
         settings.colorHex(for: state)
     }
 
+    public func alpha(for state: VPNDisplayState) -> Double {
+        settings.alpha(for: state)
+    }
+
+    public func beginColorPreview(for state: VPNDisplayState) {
+        previewColorState = state
+        applyOverlay()
+    }
+
+    public func endColorPreview() {
+        guard previewColorState != nil else {
+            return
+        }
+
+        previewColorState = nil
+        applyOverlay()
+    }
+
     private func refreshServices() async {
         do {
             let services = try await provider.listServices()
             availableServices = services
-
-            if let selected = settings.selectedServiceName, !services.contains(selected) {
-                settings.selectedServiceName = services.first
-                persistSettings()
-            } else if settings.selectedServiceName == nil {
-                settings.selectedServiceName = services.first
-                persistSettings()
-            }
-
+            synchronizeSelectedService(with: services)
             lastErrorMessage = nil
         } catch {
             availableServices = []
@@ -146,7 +242,7 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     private func refreshStatus() async {
-        guard let serviceName = settings.selectedServiceName, !serviceName.isEmpty else {
+        guard let service = selectedService else {
             snapshot = VPNStatusSnapshot(
                 state: .unknown,
                 serviceName: nil,
@@ -158,12 +254,12 @@ public final class VPNMonitoringStore: ObservableObject {
         }
 
         do {
-            snapshot = try await provider.status(for: serviceName)
+            snapshot = try await provider.status(for: service)
             lastErrorMessage = nil
         } catch {
             snapshot = VPNStatusSnapshot(
                 state: .unknown,
-                serviceName: serviceName,
+                serviceName: service.displayName,
                 rawStatus: "取得失敗",
                 updatedAt: .now
             )
@@ -174,10 +270,66 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     private func applyOverlay() {
+        if isShowingSettingsPreview {
+            let previewColor = previewColorState.map { settings.overlayColor(for: $0) }
+            overlayManager.showPreview(
+                thickness: CGFloat(settings.overlayThickness),
+                color: previewColor
+            )
+            return
+        }
+
         overlayManager.apply(state: snapshot.state, settings: settings)
     }
 
     private func persistSettings() {
         settingsPersistence.save(settings)
+    }
+
+    private func normalizedHexColor(from rawHex: String) -> String? {
+        let sanitized = rawHex
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
+            .uppercased()
+
+        guard sanitized.count == 6,
+              sanitized.allSatisfy({ $0.isHexDigit }) else {
+            return nil
+        }
+
+        return "#\(sanitized)"
+    }
+
+    private func normalizedAlpha(_ alpha: Double) -> Double? {
+        guard (0...1).contains(alpha) else {
+            return nil
+        }
+
+        return alpha
+    }
+
+    private var selectedService: VPNService? {
+        guard let serviceID = settings.selectedServiceID else {
+            return nil
+        }
+        return availableServices.first(where: { $0.id == serviceID })
+    }
+
+    private func synchronizeSelectedService(with services: [VPNService]) {
+        let resolvedService: VPNService?
+
+        if let selectedServiceID = settings.selectedServiceID {
+            resolvedService = services.first(where: { $0.id == selectedServiceID })
+        } else {
+            resolvedService = services.first
+        }
+
+        let previousServiceID = settings.selectedServiceID
+        let resolvedServiceID = resolvedService?.id
+        settings.selectedServiceID = resolvedServiceID
+
+        if previousServiceID != resolvedServiceID {
+            persistSettings()
+        }
     }
 }
