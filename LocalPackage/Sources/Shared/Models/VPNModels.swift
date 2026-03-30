@@ -34,6 +34,16 @@ public enum VPNDisplayState: String, Codable, CaseIterable, Sendable {
     }
 }
 
+public struct VPNService: Identifiable, Equatable, Codable, Sendable {
+    public let id: String
+    public let displayName: String
+
+    public init(id: String, displayName: String) {
+        self.id = id
+        self.displayName = displayName
+    }
+}
+
 public struct VPNStatusSnapshot: Equatable, Sendable {
     public var state: VPNDisplayState
     public var serviceName: String?
@@ -61,6 +71,7 @@ public struct VPNStatusSnapshot: Equatable, Sendable {
 }
 
 public struct AppSettings: Codable, Sendable {
+    public var selectedServiceID: String?
     public var selectedServiceName: String?
     public var overlayEnabled: Bool
     public var overlayThickness: Double
@@ -71,6 +82,7 @@ public struct AppSettings: Codable, Sendable {
     public var startMonitoringOnLaunch: Bool
 
     public init(
+        selectedServiceID: String? = nil,
         selectedServiceName: String? = nil,
         overlayEnabled: Bool = true,
         overlayThickness: Double = 6,
@@ -80,6 +92,7 @@ public struct AppSettings: Codable, Sendable {
         unknownColorHex: String = "#6B7280",
         startMonitoringOnLaunch: Bool = true
     ) {
+        self.selectedServiceID = selectedServiceID
         self.selectedServiceName = selectedServiceName
         self.overlayEnabled = overlayEnabled
         self.overlayThickness = overlayThickness

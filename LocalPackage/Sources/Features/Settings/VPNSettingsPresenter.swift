@@ -2,8 +2,8 @@ import SwiftUI
 import VPNMierukunSharedModels
 
 struct VPNSettingsPresenter: View {
-    let availableServices: [String]
-    @Binding var selectedServiceName: String
+    let availableServices: [VPNService]
+    @Binding var selectedServiceID: String
     @Binding var startMonitoringOnLaunch: Bool
     @Binding var overlayEnabled: Bool
     @Binding var overlayThickness: Double
@@ -16,10 +16,10 @@ struct VPNSettingsPresenter: View {
     var body: some View {
         Form {
             Section("監視") {
-                Picker("VPN サービス", selection: $selectedServiceName) {
+                Picker("VPN サービス", selection: $selectedServiceID) {
                     Text("未選択").tag("")
-                    ForEach(availableServices, id: \.self) { service in
-                        Text(service).tag(service)
+                    ForEach(availableServices) { service in
+                        Text(service.displayName).tag(service.id)
                     }
                 }
 

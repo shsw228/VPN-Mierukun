@@ -13,9 +13,9 @@ package struct VPNSettingsContainer: View {
     package var body: some View {
         VPNSettingsPresenter(
             availableServices: store.availableServices,
-            selectedServiceName: Binding(
-                get: { store.settings.selectedServiceName ?? "" },
-                set: { store.updateSelectedService($0.isEmpty ? nil : $0) }
+            selectedServiceID: Binding(
+                get: { store.settings.selectedServiceID ?? "" },
+                set: { store.updateSelectedServiceID($0.isEmpty ? nil : $0) }
             ),
             startMonitoringOnLaunch: Binding(
                 get: { store.settings.startMonitoringOnLaunch },

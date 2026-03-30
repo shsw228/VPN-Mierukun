@@ -12,7 +12,7 @@ package struct VPNStatusMenuBarContainer: View {
     package var body: some View {
         VPNStatusMenuBarPresenter(
             snapshot: store.snapshot,
-            selectedServiceName: store.snapshot.serviceName ?? store.settings.selectedServiceName,
+            selectedServiceName: store.snapshot.serviceName ?? store.selectedServiceDisplayName,
             overlayEnabled: Binding(
                 get: { store.settings.overlayEnabled },
                 set: { store.updateOverlayEnabled($0) }

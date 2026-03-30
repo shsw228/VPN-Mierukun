@@ -8,7 +8,7 @@ public final class VPNMonitoringStore: ObservableObject {
     public static let shared = VPNMonitoringStore()
 
     @Published public private(set) var snapshot: VPNStatusSnapshot = .initial
-    @Published public private(set) var availableServices: [String] = []
+    @Published public private(set) var availableServices: [VPNService] = []
     @Published public private(set) var isMonitoring = false
     @Published public private(set) var settings: AppSettings
     @Published public private(set) var lastErrorMessage: String?
@@ -19,7 +19,7 @@ public final class VPNMonitoringStore: ObservableObject {
     private var monitorTask: Task<Void, Never>?
 
     init(
-        provider: any VPNStatusProviding = ScutilVPNStatusProvider(),
+        provider: any VPNStatusProviding = SystemConfigurationVPNStatusProvider(),
         settingsPersistence: any AppSettingsPersisting = UserDefaultsAppSettingsPersistence()
     ) {
         self.provider = provider
@@ -74,7 +74,7 @@ public final class VPNMonitoringStore: ObservableObject {
         isMonitoring = false
         snapshot = VPNStatusSnapshot(
             state: .unknown,
-            serviceName: settings.selectedServiceName,
+            serviceName: selectedServiceDisplayName,
             rawStatus: "監視停止中",
             updatedAt: .now
         )
@@ -92,8 +92,13 @@ public final class VPNMonitoringStore: ObservableObject {
         applyOverlay()
     }
 
-    public func updateSelectedService(_ serviceName: String?) {
-        settings.selectedServiceName = serviceName
+    public var selectedServiceDisplayName: String? {
+        selectedService?.displayName ?? settings.selectedServiceName
+    }
+
+    public func updateSelectedServiceID(_ serviceID: String?) {
+        settings.selectedServiceID = serviceID
+        settings.selectedServiceName = availableServices.first(where: { $0.id == serviceID })?.displayName
         persistSettings()
         refreshNow()
     }
@@ -129,15 +134,7 @@ public final class VPNMonitoringStore: ObservableObject {
         do {
             let services = try await provider.listServices()
             availableServices = services
-
-            if let selected = settings.selectedServiceName, !services.contains(selected) {
-                settings.selectedServiceName = services.first
-                persistSettings()
-            } else if settings.selectedServiceName == nil {
-                settings.selectedServiceName = services.first
-                persistSettings()
-            }
-
+            synchronizeSelectedService(with: services)
             lastErrorMessage = nil
         } catch {
             availableServices = []
@@ -146,7 +143,7 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     private func refreshStatus() async {
-        guard let serviceName = settings.selectedServiceName, !serviceName.isEmpty else {
+        guard let service = selectedService else {
             snapshot = VPNStatusSnapshot(
                 state: .unknown,
                 serviceName: nil,
@@ -158,12 +155,12 @@ public final class VPNMonitoringStore: ObservableObject {
         }
 
         do {
-            snapshot = try await provider.status(for: serviceName)
+            snapshot = try await provider.status(for: service)
             lastErrorMessage = nil
         } catch {
             snapshot = VPNStatusSnapshot(
                 state: .unknown,
-                serviceName: serviceName,
+                serviceName: service.displayName,
                 rawStatus: "取得失敗",
                 updatedAt: .now
             )
@@ -179,5 +176,33 @@ public final class VPNMonitoringStore: ObservableObject {
 
     private func persistSettings() {
         settingsPersistence.save(settings)
+    }
+
+    private var selectedService: VPNService? {
+        if let serviceID = settings.selectedServiceID {
+            return availableServices.first(where: { $0.id == serviceID })
+        }
+
+        if let legacyName = settings.selectedServiceName {
+            return availableServices.first(where: { $0.displayName == legacyName })
+        }
+
+        return nil
+    }
+
+    private func synchronizeSelectedService(with services: [VPNService]) {
+        let resolvedService: VPNService?
+
+        if let selectedServiceID = settings.selectedServiceID {
+            resolvedService = services.first(where: { $0.id == selectedServiceID })
+        } else if let legacyName = settings.selectedServiceName {
+            resolvedService = services.first(where: { $0.displayName == legacyName })
+        } else {
+            resolvedService = services.first
+        }
+
+        settings.selectedServiceID = resolvedService?.id
+        settings.selectedServiceName = resolvedService?.displayName
+        persistSettings()
     }
 }
