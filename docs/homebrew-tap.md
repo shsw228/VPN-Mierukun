@@ -42,7 +42,7 @@ brew install --cask shsw228/tap/vpn-mierukun
 release artifact をローカル生成:
 
 ```bash
-./scripts/homebrew/build-release-artifacts.sh 0.1.1 ./dist
+./scripts/homebrew/build-release-artifacts.sh 0.1.2 ./dist
 ```
 
 cask の構文確認:
@@ -54,5 +54,5 @@ ruby -c ./dist/vpn-mierukun.rb
 ローカル tap へ反映:
 
 ```bash
-./scripts/homebrew/sync-tap-repo.sh ./dist/vpn-mierukun.rb ../homebrew-tap 0.1.1
+./scripts/homebrew/sync-tap-repo.sh ./dist/vpn-mierukun.rb ../homebrew-tap 0.1.2
 ```
