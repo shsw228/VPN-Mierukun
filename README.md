@@ -5,14 +5,14 @@ VPN の接続状況を macOS の画面周囲に表示するオーバーレイ色
 常時画面を監視しなくても、接続中・未接続・判定不能の状態をひと目で把握できることを目指します。
 
 ## セットアップ
-- `xcodegen generate`
 - `open VPN-Mierukun.xcodeproj`
 - 必要に応じて `xcodebuild -project VPN-Mierukun.xcodeproj -scheme VPN-Mierukun -destination 'platform=macOS' build`
 
 ## 開発メモ
 - 想定プラットフォーム: macOS
 - 想定 UI: メニューバー常駐 + 画面端オーバーレイ
-- app target は薄く保ち、実装本体は `LocalPackage/Sources/VPNMierukunFeature` に配置
+- app target は薄く保ち、実装本体は `LocalPackage/Sources` に配置
+- ディレクトリ構成は `AppEntry / Features / Core / Shared` を基準にする
 - 詳細仕様は [docs/specification.md](docs/specification.md) を参照
 
 ## ドキュメント
@@ -21,20 +21,39 @@ VPN の接続状況を macOS の画面周囲に表示するオーバーレイ色
 
 ## Package 依存グラフ
 ```mermaid
-graph TD
-  VPNMierukunFeature --> VPNMierukunStores
+flowchart TB
+  subgraph AppEntry["App Entry"]
+    VPNMierukunFeature
+  end
+
+  subgraph Features["Features"]
+    VPNMierukunMenuBarFeature
+    VPNMierukunSettingsFeature
+  end
+
+  subgraph Core["Core"]
+    VPNMierukunStores
+    VPNMierukunServices
+    VPNMierukunInfrastructure
+  end
+
+  subgraph Shared["Shared"]
+    VPNMierukunSharedModels
+  end
+
   VPNMierukunFeature --> VPNMierukunMenuBarFeature
   VPNMierukunFeature --> VPNMierukunSettingsFeature
+  VPNMierukunFeature --> VPNMierukunStores
 
-  VPNMierukunStores --> VPNMierukunSharedModels
+  VPNMierukunMenuBarFeature --> VPNMierukunStores
+  VPNMierukunMenuBarFeature --> VPNMierukunSharedModels
+
+  VPNMierukunSettingsFeature --> VPNMierukunStores
+  VPNMierukunSettingsFeature --> VPNMierukunSharedModels
+
   VPNMierukunStores --> VPNMierukunServices
   VPNMierukunStores --> VPNMierukunInfrastructure
-
-  VPNMierukunMenuBarFeature --> VPNMierukunSharedModels
-  VPNMierukunMenuBarFeature --> VPNMierukunStores
-
-  VPNMierukunSettingsFeature --> VPNMierukunSharedModels
-  VPNMierukunSettingsFeature --> VPNMierukunStores
+  VPNMierukunStores --> VPNMierukunSharedModels
 
   VPNMierukunServices --> VPNMierukunSharedModels
   VPNMierukunInfrastructure --> VPNMierukunSharedModels

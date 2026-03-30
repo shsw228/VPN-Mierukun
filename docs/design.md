@@ -21,20 +21,26 @@
 ```text
 LocalPackage/Sources/
 ├── AppEntry/
+├── Core/
+│   ├── Infrastructure/
+│   ├── Services/
+│   └── Stores/
 ├── Features/
 │   ├── MenuBar/
 │   └── Settings/
-├── Infrastructure/
-├── Services/
 ├── Shared/
 │   └── Models/
-└── Stores/
 ```
 
+## ディレクトリ方針
+- README の依存レイヤーと物理配置を合わせる
+- `Stores / Services / Infrastructure` は `Core` 配下へまとめ、横断的な中核処理として扱う
+- `Features` には UI 機能ごとの Container / Presenter を置く
+
 ## Xcode プロジェクト方針
-- `project.yml` を正本とする
-- XcodeGen では `syncedFolder` を使い、app target 側のソース参照は Folder ベースで同期する
-- 構成変更時のみ `xcodegen generate` を実行し、通常の Swift コード編集では毎回再生成しない
+- `.xcodeproj` を正本として扱う
+- `LocalPackage` は Swift Package として接続し、内部依存は `Package.swift` で管理する
+- Xcode プロジェクト構成の変更は `.xcodeproj` 側へ直接反映する
 
 ## 責務分割
 - `AppEntry`

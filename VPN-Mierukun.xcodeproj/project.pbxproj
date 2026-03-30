@@ -7,30 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1E39D68884C8A77322974024 /* VPNMierukunFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 5E38EF6CA3F06DA3DECAEBC2 /* VPNMierukunFeature */; };
+		B7F002CC2F7A765600A9FD69 /* VPNMierukunFeature in Frameworks */ = {isa = PBXBuildFile; productRef = B7F002CB2F7A765600A9FD69 /* VPNMierukunFeature */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		01A7E76D2D57AFC309BC1A34 /* LocalPackage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = LocalPackage; path = LocalPackage; sourceTree = SOURCE_ROOT; };
+		B7F002C92F7A761800A9FD69 /* LocalPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = LocalPackage; sourceTree = "<group>"; };
 		E95189DFDE90A7A2C6552E08 /* VPN-Mierukun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "VPN-Mierukun.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		0BD90A0FFF3111A3256324D6 /* LocalPackage */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = LocalPackage;
-			sourceTree = "<group>";
-		};
 		49D6EE2E7577CE5A9CBD1512 /* VPNMierukunApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
 			path = VPNMierukunApp;
 			sourceTree = "<group>";
 		};
@@ -41,29 +28,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E39D68884C8A77322974024 /* VPNMierukunFeature in Frameworks */,
+				B7F002CC2F7A765600A9FD69 /* VPNMierukunFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		45E66B391A510B72F27DED2A /* Packages */ = {
-			isa = PBXGroup;
-			children = (
-				01A7E76D2D57AFC309BC1A34 /* LocalPackage */,
-			);
-			name = Packages;
-			sourceTree = "<group>";
-		};
 		66C36C8645B6C74A287FCF35 = {
 			isa = PBXGroup;
 			children = (
-				0BD90A0FFF3111A3256324D6 /* LocalPackage */,
-				45E66B391A510B72F27DED2A /* Packages */,
+				B7F002C92F7A761800A9FD69 /* LocalPackage */,
 				49D6EE2E7577CE5A9CBD1512 /* VPNMierukunApp */,
+				B7F002CA2F7A765200A9FD69 /* Frameworks */,
 				C82D1DE1E5148D8063C8CFFA /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		B7F002CA2F7A765200A9FD69 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		C82D1DE1E5148D8063C8CFFA /* Products */ = {
@@ -94,7 +80,7 @@
 			);
 			name = "VPN-Mierukun";
 			packageProductDependencies = (
-				5E38EF6CA3F06DA3DECAEBC2 /* VPNMierukunFeature */,
+				B7F002CB2F7A765600A9FD69 /* VPNMierukunFeature */,
 			);
 			productName = "VPN-Mierukun";
 			productReference = E95189DFDE90A7A2C6552E08 /* VPN-Mierukun.app */;
@@ -107,9 +93,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
+				LastUpgradeCheck = 2630;
 			};
 			buildConfigurationList = 17D69BD5DD9B2174D6872831 /* Build configuration list for PBXProject "VPN-Mierukun" */;
 			developmentRegion = en;
@@ -121,7 +105,6 @@
 			mainGroup = 66C36C8645B6C74A287FCF35;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A0EA4B7D77F663E700AAD70A /* XCLocalSwiftPackageReference "LocalPackage" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C82D1DE1E5148D8063C8CFFA /* Products */;
@@ -188,9 +171,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -210,6 +195,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.1;
@@ -222,6 +208,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "VPN-Mierukun";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -242,6 +229,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = NO;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "VPN-Mierukun";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -290,9 +278,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -305,6 +295,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.1;
@@ -334,15 +325,8 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		A0EA4B7D77F663E700AAD70A /* XCLocalSwiftPackageReference "LocalPackage" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = LocalPackage;
-		};
-/* End XCLocalSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		5E38EF6CA3F06DA3DECAEBC2 /* VPNMierukunFeature */ = {
+		B7F002CB2F7A765600A9FD69 /* VPNMierukunFeature */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = VPNMierukunFeature;
 		};

@@ -22,14 +22,14 @@ let package = Package(
             dependencies: [
                 "VPNMierukunSharedModels"
             ],
-            path: "Sources/Services"
+            path: "Sources/Core/Services"
         ),
         .target(
             name: "VPNMierukunInfrastructure",
             dependencies: [
                 "VPNMierukunSharedModels"
             ],
-            path: "Sources/Infrastructure"
+            path: "Sources/Core/Infrastructure"
         ),
         .target(
             name: "VPNMierukunStores",
@@ -38,7 +38,7 @@ let package = Package(
                 "VPNMierukunServices",
                 "VPNMierukunInfrastructure"
             ],
-            path: "Sources/Stores"
+            path: "Sources/Core/Stores"
         ),
         .target(
             name: "VPNMierukunMenuBarFeature",
