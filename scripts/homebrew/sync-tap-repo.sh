@@ -23,7 +23,7 @@ if [ -d "${TAP_DIR}/.git" ]; then
   (
     cd "${TAP_DIR}"
 
-    if git diff --quiet -- Casks/vpn-mierukun.rb; then
+    if [ -z "$(git status --porcelain -- Casks/vpn-mierukun.rb)" ]; then
       exit 0
     fi
 
