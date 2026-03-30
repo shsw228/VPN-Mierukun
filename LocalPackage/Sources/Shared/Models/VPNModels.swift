@@ -1,7 +1,6 @@
-import AppKit
 import Foundation
 
-public enum VPNDisplayState: String, Codable, CaseIterable, Sendable {
+public enum VPNDisplayState: String, Codable, CaseIterable, Identifiable, Sendable {
     case connected
     case disconnected
     case transitioning
@@ -32,6 +31,8 @@ public enum VPNDisplayState: String, Codable, CaseIterable, Sendable {
             "questionmark.circle.fill"
         }
     }
+
+    public var id: String { rawValue }
 }
 
 public struct VPNService: Identifiable, Equatable, Codable, Sendable {
@@ -70,14 +71,28 @@ public struct VPNStatusSnapshot: Equatable, Sendable {
     )
 }
 
+public struct OverlayColorValue: Equatable, Sendable {
+    public let hex: String
+    public let alpha: Double
+
+    public init(hex: String, alpha: Double) {
+        self.hex = hex
+        self.alpha = alpha
+    }
+}
+
 public struct AppSettings: Codable, Sendable {
     public var selectedServiceID: String?
     public var overlayEnabled: Bool
     public var overlayThickness: Double
     public var connectedColorHex: String
+    public var connectedAlpha: Double
     public var disconnectedColorHex: String
+    public var disconnectedAlpha: Double
     public var transitioningColorHex: String
+    public var transitioningAlpha: Double
     public var unknownColorHex: String
+    public var unknownAlpha: Double
     public var startMonitoringOnLaunch: Bool
 
     public init(
@@ -85,18 +100,26 @@ public struct AppSettings: Codable, Sendable {
         overlayEnabled: Bool = true,
         overlayThickness: Double = 6,
         connectedColorHex: String = "#22C55E",
+        connectedAlpha: Double = 0.9,
         disconnectedColorHex: String = "#EF4444",
+        disconnectedAlpha: Double = 0.9,
         transitioningColorHex: String = "#F59E0B",
+        transitioningAlpha: Double = 0.9,
         unknownColorHex: String = "#6B7280",
+        unknownAlpha: Double = 0.9,
         startMonitoringOnLaunch: Bool = true
     ) {
         self.selectedServiceID = selectedServiceID
         self.overlayEnabled = overlayEnabled
         self.overlayThickness = overlayThickness
         self.connectedColorHex = connectedColorHex
+        self.connectedAlpha = connectedAlpha
         self.disconnectedColorHex = disconnectedColorHex
+        self.disconnectedAlpha = disconnectedAlpha
         self.transitioningColorHex = transitioningColorHex
+        self.transitioningAlpha = transitioningAlpha
         self.unknownColorHex = unknownColorHex
+        self.unknownAlpha = unknownAlpha
         self.startMonitoringOnLaunch = startMonitoringOnLaunch
     }
 
@@ -126,21 +149,29 @@ public struct AppSettings: Codable, Sendable {
         }
     }
 
-    package func color(for state: VPNDisplayState) -> NSColor {
-        NSColor(hex: colorHex(for: state)) ?? .systemGray
-    }
-}
-
-package extension NSColor {
-    convenience init?(hex: String) {
-        let sanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "#", with: "")
-        guard sanitized.count == 6, let value = Int(sanitized, radix: 16) else {
-            return nil
+    package func alpha(for state: VPNDisplayState) -> Double {
+        switch state {
+        case .connected:
+            connectedAlpha
+        case .disconnected:
+            disconnectedAlpha
+        case .transitioning:
+            transitioningAlpha
+        case .unknown:
+            unknownAlpha
         }
+    }
 
-        let red = CGFloat((value >> 16) & 0xFF) / 255.0
-        let green = CGFloat((value >> 8) & 0xFF) / 255.0
-        let blue = CGFloat(value & 0xFF) / 255.0
-        self.init(red: red, green: green, blue: blue, alpha: 0.9)
+    package mutating func setAlpha(_ alpha: Double, for state: VPNDisplayState) {
+        switch state {
+        case .connected:
+            connectedAlpha = alpha
+        case .disconnected:
+            disconnectedAlpha = alpha
+        case .transitioning:
+            transitioningAlpha = alpha
+        case .unknown:
+            unknownAlpha = alpha
+        }
     }
 }

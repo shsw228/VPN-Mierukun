@@ -1,0 +1,24 @@
+{
+  "originHash" : "37a0fddba95ed1b58c2967e117cf9309ffc632180fb9ae61238eb8e5b66be6b8",
+  "pins" : [
+    {
+      "identity" : "licenselist",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cybozu/LicenseList.git",
+      "state" : {
+        "revision" : "6740b7c6372d26c89bae227b5e9ee9793064e816",
+        "version" : "2.3.0"
+      }
+    },
+    {
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams.git",
+      "state" : {
+        "revision" : "deaf82e867fa2cbd3cd865978b079bfcf384ac28",
+        "version" : "6.2.1"
+      }
+    }
+  ],
+  "version" : 3
+}

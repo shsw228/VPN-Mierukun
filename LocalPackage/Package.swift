@@ -12,6 +12,10 @@ let package = Package(
             targets: ["VPNMierukunFeature"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.1"),
+        .package(url: "https://github.com/cybozu/LicenseList.git", exact: "2.3.0")
+    ],
     targets: [
         .target(
             name: "VPNMierukunSharedModels",
@@ -20,7 +24,8 @@ let package = Package(
         .target(
             name: "VPNMierukunServices",
             dependencies: [
-                "VPNMierukunSharedModels"
+                "VPNMierukunSharedModels",
+                .product(name: "Yams", package: "Yams")
             ],
             path: "Sources/Core/Services"
         ),
@@ -52,7 +57,9 @@ let package = Package(
             name: "VPNMierukunSettingsFeature",
             dependencies: [
                 "VPNMierukunSharedModels",
-                "VPNMierukunStores"
+                "VPNMierukunInfrastructure",
+                "VPNMierukunStores",
+                .product(name: "LicenseList", package: "LicenseList")
             ],
             path: "Sources/Features/Settings"
         ),

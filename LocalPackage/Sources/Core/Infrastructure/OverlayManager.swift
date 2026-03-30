@@ -40,16 +40,55 @@ package final class OverlayManager {
     }
 
     private var windowsByScreenID: [String: [OverlayWindow]] = [:]
+    private var previewTask: Task<Void, Never>?
+    private var previewThickness: CGFloat = 6
+    private var previewHue: CGFloat = 0
+    private var previewColorOverride: NSColor?
 
     package init() {}
 
     package func apply(state: VPNDisplayState, settings: AppSettings) {
+        guard previewTask == nil else {
+            showPreview(thickness: CGFloat(settings.overlayThickness), color: previewColorOverride)
+            return
+        }
+
         guard settings.overlayEnabled else {
             hideAll()
             return
         }
 
-        syncWindows(thickness: CGFloat(settings.overlayThickness), color: settings.color(for: state))
+        syncWindows(thickness: CGFloat(settings.overlayThickness), color: settings.overlayColor(for: state))
+    }
+
+    package func showPreview(thickness: CGFloat, color: NSColor? = nil) {
+        previewThickness = thickness
+        previewColorOverride = color
+
+        if previewTask == nil {
+            previewTask = Task { [weak self] in
+                guard let self else {
+                    return
+                }
+
+                while !Task.isCancelled {
+                    syncWindows(thickness: previewThickness, color: activePreviewColor)
+                    if previewColorOverride == nil {
+                        previewHue = (previewHue + 0.005).truncatingRemainder(dividingBy: 1)
+                    }
+                    try? await Task.sleep(for: .milliseconds(80))
+                }
+            }
+        } else {
+            syncWindows(thickness: previewThickness, color: activePreviewColor)
+        }
+    }
+
+    package func hidePreview() {
+        previewTask?.cancel()
+        previewTask = nil
+        previewColorOverride = nil
+        hideAll()
     }
 
     package func hideAll() {
@@ -109,5 +148,18 @@ package final class OverlayManager {
             NSRect(x: screenFrame.minX, y: screenFrame.minY, width: thickness, height: screenFrame.height),
             NSRect(x: screenFrame.maxX - thickness, y: screenFrame.minY, width: thickness, height: screenFrame.height)
         ]
+    }
+
+    private var activePreviewColor: NSColor {
+        if let previewColorOverride {
+            return previewColorOverride
+        }
+
+        return NSColor(
+            calibratedHue: previewHue,
+            saturation: 0.8,
+            brightness: 0.95,
+            alpha: 0.9
+        )
     }
 }
