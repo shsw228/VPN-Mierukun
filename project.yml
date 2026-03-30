@@ -1,0 +1,31 @@
+name: VPN-Mierukun
+options:
+  minimumXcodeGenVersion: 2.39.0
+  createIntermediateGroups: true
+  defaultSourceDirectoryType: syncedFolder
+fileGroups:
+  - LocalPackage
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+targets:
+  VPN-Mierukun:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: VPNMierukunApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.shsw228.vpn-mierukun
+        PRODUCT_NAME: VPN-Mierukun
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: VPN-Mierukun
+        INFOPLIST_KEY_LSUIElement: YES
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - package: LocalPackage
+        product: VPNMierukunFeature
+packages:
+  LocalPackage:
+    path: LocalPackage
