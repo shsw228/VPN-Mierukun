@@ -25,6 +25,8 @@ rm -rf "${DERIVED_DATA_PATH}" "${OUTPUT_DIR}"
 mkdir -p "${OUTPUT_DIR}"
 
 xcodebuild \
+  -skipPackagePluginValidation \
+  -skipMacroValidation \
   -project "${PROJECT_PATH}" \
   -scheme "${SCHEME}" \
   -configuration Release \
