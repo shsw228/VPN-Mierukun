@@ -117,9 +117,11 @@ final class WindowObserverView: NSView {
                 self?.updateVisibility()
             },
             center.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
-                self?.isWindowVisible = false
-                self?.activationPolicyController.update(isShowingSettings: false)
-                self?.onHide?()
+                Task { @MainActor [weak self] in
+                    self?.isWindowVisible = false
+                    self?.activationPolicyController.update(isShowingSettings: false)
+                    self?.onHide?()
+                }
             }
         ]
 
