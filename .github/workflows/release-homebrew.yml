@@ -1,0 +1,65 @@
+name: Release Homebrew
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    env:
+      HOMEBREW_TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build release artifacts
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          OUTPUT_DIR="${RUNNER_TEMP}/dist"
+          RELEASE_TAG="${TAG_NAME}" ./scripts/homebrew/build-release-artifacts.sh "${VERSION}" "${OUTPUT_DIR}" "${GITHUB_REPOSITORY}"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          OUTPUT_DIR="${RUNNER_TEMP}/dist"
+
+          if ! gh release view "${TAG_NAME}" >/dev/null 2>&1; then
+            gh release create "${TAG_NAME}" --title "${TAG_NAME}" --generate-notes
+          fi
+
+          gh release upload "${TAG_NAME}" \
+            "${OUTPUT_DIR}/VPN-Mierukun-${VERSION}.zip" \
+            "${OUTPUT_DIR}/VPN-Mierukun-${VERSION}.zip.sha256" \
+            "${OUTPUT_DIR}/vpn-mierukun.rb" \
+            --clobber
+
+      - name: Update tap repository
+        if: ${{ env.HOMEBREW_TAP_REPOSITORY != '' && env.HOMEBREW_TAP_TOKEN != '' }}
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          TAP_DIR="${RUNNER_TEMP}/homebrew-tap"
+          OUTPUT_DIR="${RUNNER_TEMP}/dist"
+
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${HOMEBREW_TAP_REPOSITORY}.git" "${TAP_DIR}"
+          cd "${TAP_DIR}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          /bin/bash "${GITHUB_WORKSPACE}/scripts/homebrew/sync-tap-repo.sh" "${OUTPUT_DIR}/vpn-mierukun.rb" "${TAP_DIR}" "${VERSION}"
+          git push
