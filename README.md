@@ -11,6 +11,7 @@ VPN の接続状況を macOS の画面周囲に表示するオーバーレイ色
 ## 配布
 - GitHub Releases に配布用 ZIP を公開し、Homebrew tap の `cask` からインストールする想定です
 - インストール例: `brew install --cask shsw228/tap/vpn-mierukun`
+- インストール後に quarantine を解除: `xattr -dr com.apple.quarantine /Applications/VPN-Mierukun.app`
 - リリース用 artifact は `./scripts/homebrew/build-release-artifacts.sh <version> ./dist` でローカル生成できます
 - 詳細は [docs/homebrew-tap.md](docs/homebrew-tap.md) を参照
 
