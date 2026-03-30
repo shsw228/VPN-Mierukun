@@ -93,12 +93,11 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     public var selectedServiceDisplayName: String? {
-        selectedService?.displayName ?? settings.selectedServiceName
+        selectedService?.displayName
     }
 
     public func updateSelectedServiceID(_ serviceID: String?) {
         settings.selectedServiceID = serviceID
-        settings.selectedServiceName = availableServices.first(where: { $0.id == serviceID })?.displayName
         persistSettings()
         refreshNow()
     }
@@ -179,15 +178,10 @@ public final class VPNMonitoringStore: ObservableObject {
     }
 
     private var selectedService: VPNService? {
-        if let serviceID = settings.selectedServiceID {
-            return availableServices.first(where: { $0.id == serviceID })
+        guard let serviceID = settings.selectedServiceID else {
+            return nil
         }
-
-        if let legacyName = settings.selectedServiceName {
-            return availableServices.first(where: { $0.displayName == legacyName })
-        }
-
-        return nil
+        return availableServices.first(where: { $0.id == serviceID })
     }
 
     private func synchronizeSelectedService(with services: [VPNService]) {
@@ -195,14 +189,11 @@ public final class VPNMonitoringStore: ObservableObject {
 
         if let selectedServiceID = settings.selectedServiceID {
             resolvedService = services.first(where: { $0.id == selectedServiceID })
-        } else if let legacyName = settings.selectedServiceName {
-            resolvedService = services.first(where: { $0.displayName == legacyName })
         } else {
             resolvedService = services.first
         }
 
         settings.selectedServiceID = resolvedService?.id
-        settings.selectedServiceName = resolvedService?.displayName
         persistSettings()
     }
 }

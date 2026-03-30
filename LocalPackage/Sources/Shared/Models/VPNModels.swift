@@ -72,7 +72,6 @@ public struct VPNStatusSnapshot: Equatable, Sendable {
 
 public struct AppSettings: Codable, Sendable {
     public var selectedServiceID: String?
-    public var selectedServiceName: String?
     public var overlayEnabled: Bool
     public var overlayThickness: Double
     public var connectedColorHex: String
@@ -83,7 +82,6 @@ public struct AppSettings: Codable, Sendable {
 
     public init(
         selectedServiceID: String? = nil,
-        selectedServiceName: String? = nil,
         overlayEnabled: Bool = true,
         overlayThickness: Double = 6,
         connectedColorHex: String = "#22C55E",
@@ -93,7 +91,6 @@ public struct AppSettings: Codable, Sendable {
         startMonitoringOnLaunch: Bool = true
     ) {
         self.selectedServiceID = selectedServiceID
-        self.selectedServiceName = selectedServiceName
         self.overlayEnabled = overlayEnabled
         self.overlayThickness = overlayThickness
         self.connectedColorHex = connectedColorHex
